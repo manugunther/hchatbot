@@ -25,6 +25,9 @@ data RuleWidget = RuleWidget { _entryRule   :: Entry
                              , _tvRule      :: TextView
                              , _tvAnswer    :: TextView
                              , _applyButton :: Button
+                             , _ruleList    :: ListStore Rule
+                             , _ruleTv      :: TreeView
+                             , _ruleBox     :: VBox
                              }
 $(mkLenses ''RuleWidget)
 
@@ -84,6 +87,3 @@ initChState =
 initState :: GState
 initState =
     GState initChState (actualCateg initChState)
-
-
-

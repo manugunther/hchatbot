@@ -25,9 +25,7 @@ import HChatbot.Category
 import HChatbot.Rule
 
 import HChatbot.GUI.GState
-
-
-
+import HChatbot.GUI.RuleList
 
 -- | Función principal de la interfaz.
 main :: IO ()
@@ -42,6 +40,7 @@ main = do
     runRWST (do configWindow
                 configRuleWidget
                 configChatWidget
+                configRuleList
             ) gReader gState
     
     mainGUI
@@ -57,8 +56,13 @@ makeGState xml = do
     tvRule      <- builderGetObject xml castToTextView "textviewRule"
     tvAnswer    <- builderGetObject xml castToTextView "textviewAnswer"
     applyButton <- builderGetObject xml castToButton "appButton"
+    boxRuleList <- builderGetObject xml castToVBox "boxRuleList"
     
-    let rwidget = RuleWidget entryRule tvRule tvAnswer applyButton
+    ruleList <- listStoreNew []
+    ruleTv   <- treeViewNewWithModel ruleList
+    
+    let rwidget = RuleWidget entryRule tvRule tvAnswer applyButton 
+                             ruleList ruleTv boxRuleList
     
     -- ChatWidget
     
@@ -116,6 +120,8 @@ configRuleWidget = get >>= \ref -> ask >>= \cnt ->
                     
                     let newRule = Rule (inpRule:opts) out
                     let categ' = addRule categ newRule
+                    
+                    runRWST (addRuleToList newRule) cnt ref
                     
                     putStrLn $ "newRule = " ++ (show newRule)
                     
