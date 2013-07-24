@@ -10,12 +10,15 @@ import Graphics.UI.Gtk.SourceView
 
 import Data.IORef
 import Data.Reference
+import qualified Data.Map as M
 
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State hiding (get,put)
 import Control.Monad.Trans.RWS
 
+import HChatbot.ChatbotState
+import HChatbot.Category
 import HChatbot.Rule
 
 data RuleWidget = RuleWidget { _entryRule   :: Entry
@@ -38,15 +41,9 @@ data GReader = GReader { _hWindow      :: Window
                        }
 $(mkLenses ''GReader)
 
-
--- data PartialRule = PartialRule { _inp  :: Maybe String
---                                , _opts :: Maybe String
---                                , _ans  :: Maybe String
--- }
--- $(mkLenses ''PartialRule)
-
-
-data GState = GState { _hRules :: [Rule]
+data GState = GState { _chatState :: ChatbotState
+                     -- nombre de la categoría seleccionada en la interfaz
+                     , _selCateg :: String
                      }
 $(mkLenses ''GState)
 
@@ -74,3 +71,19 @@ updateGState f = do
                 put r
 
 io = liftIO
+
+initChState :: ChatbotState
+initChState =
+    ChatbotState (M.insert "Default" defCat $ M.singleton "Saludos" initCat)
+                 "Saludos"
+                 
+    where initCat = Category "Saludos" []
+          defCat = Category "Default" [Rule [""] "no entiendo"]
+
+
+initState :: GState
+initState =
+    GState initChState (actualCateg initChState)
+
+
+

@@ -242,7 +242,19 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkVBox" id="vbox3">
+                  <object class="GtkVSeparator" id="vseparator1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="padding">9</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkVBox" id="newRuleBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
@@ -301,6 +313,18 @@
                       </packing>
                     </child>
                     <child>
+                      <object class="GtkHSeparator" id="hseparator1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="padding">6</property>
+                        <property name="position">4</property>
+                      </packing>
+                    </child>
+                    <child>
                       <object class="GtkLabel" id="label5">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -311,7 +335,7 @@
                         <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="padding">10</property>
-                        <property name="position">4</property>
+                        <property name="position">5</property>
                       </packing>
                     </child>
                     <child>
@@ -322,7 +346,7 @@
                       <packing>
                         <property name="expand">True</property>
                         <property name="fill">True</property>
-                        <property name="position">5</property>
+                        <property name="position">6</property>
                       </packing>
                     </child>
                     <child>
@@ -348,14 +372,14 @@
                         <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="padding">15</property>
-                        <property name="position">6</property>
+                        <property name="position">7</property>
                       </packing>
                     </child>
                   </object>
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </object>
@@ -382,6 +406,7 @@
                   <object class="GtkTextView" id="textviewChat">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="editable">False</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>

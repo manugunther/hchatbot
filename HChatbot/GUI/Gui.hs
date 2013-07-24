@@ -13,11 +13,16 @@ import Control.Concurrent.STM
 import Lens.Family
 
 import Data.Reference (writeRef,newRef,readRef)
+import qualified Data.Map as M
+import Data.Maybe
 
 import qualified Data.Text as T
 
-import HChatbot.Rule
 import HChatbot.ParserChat
+import HChatbot.Normalization
+import HChatbot.ChatbotState
+import HChatbot.Category
+import HChatbot.Rule
 
 import HChatbot.GUI.GState
 
@@ -64,7 +69,7 @@ makeGState xml = do
     
     win <- builderGetObject xml castToWindow "window"
     
-    gstate <- newRef $ GState []
+    gstate <- newRef initState
     let greader = GReader win rwidget chatwidget
     
     return (greader,gstate)
@@ -88,7 +93,10 @@ configRuleWidget = get >>= \ref -> ask >>= \cnt ->
         _ <- io $ button `on` buttonActivated $ io $ 
                 do
                     st  <- readRef ref
-                    let rules  = st  ^. hRules
+                    let cname = st ^. selCateg
+                    let chst = (st ^. chatState)
+                    let categMap = categs chst
+                    let categ = fromJust $ M.lookup cname categMap
                     
                     putStrLn "Guardando regla"
                     inpRule <- entryGetText (rulew ^. entryRule)
@@ -107,15 +115,14 @@ configRuleWidget = get >>= \ref -> ask >>= \cnt ->
                                   else splitInput inpOpts
                     
                     let newRule = Rule (inpRule:opts) out
+                    let categ' = addRule categ newRule
                     
                     putStrLn $ "newRule = " ++ (show newRule)
                     
-                    writeRef ref (GState (newRule:rules))
+                    writeRef ref (GState (replaceCateg chst cname categ')
+                                         cname)
                     
-                    st' <- readRef ref
-                    let rs = st' ^. hRules
-                    putStrLn $ "State = " ++ (show rs)
---                     ((<~) hRules (newRule:rules) st)
+
                     
                     -- Agregar la nueva regla en la interfaz
         return ()
@@ -130,13 +137,16 @@ configChatWidget = get >>= \ref -> ask >>= \cnt ->
         _ <- io $ entryChat `on` entryActivate $ io $ 
                  do
                      st <- readRef ref
-                     let rules = st ^. hRules
-                     str <- entryGetText entryChat
+                     let chState = st ^. chatState
+                     let catsList = categList chState
+                     
+                     str' <- entryGetText entryChat
+                     let str = normalize str'
                      tvBuf <- textViewGetBuffer tvChat
                      
                      either (\_ -> showChat tvChat tvBuf str "")
                             (\ans -> showChat tvChat tvBuf str ans)
-                            (parseInChat rules str)
+                            (parseInChat catsList str)
                             
                      entrySetText entryChat ""
         return ()
