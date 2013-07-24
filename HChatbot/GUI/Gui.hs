@@ -57,9 +57,9 @@ makeGState xml = do
     tvAnswer    <- builderGetObject xml castToTextView "textviewAnswer"
     applyButton <- builderGetObject xml castToButton "appButton"
     boxRuleList <- builderGetObject xml castToVBox "boxRuleList"
-    
-    ruleList <- listStoreNew []
-    ruleTv   <- treeViewNewWithModel ruleList
+
+    ruleTv   <- treeViewNew
+    ruleList <- stateToTreeStore initChState
     
     let rwidget = RuleWidget entryRule tvRule tvAnswer applyButton 
                              ruleList ruleTv boxRuleList
@@ -81,7 +81,7 @@ makeGState xml = do
     
 -- | Configura la ventana principal.
 configWindow :: GuiMonad ()
-configWindow = ask >>= \content -> 
+configWindow = ask >>= \content ->
             io $ do
             let window = content ^. hWindow
             windowMaximize window
@@ -113,12 +113,10 @@ configRuleWidget = get >>= \ref -> ask >>= \cnt ->
                     
                     inpOpts <- textBufferGetText tbufRule stitRule enditRule True
                     out <- textBufferGetText tbufAns stitAns enditAns True
+
                     
-                    let opts = if inpOpts==""
-                                  then []
-                                  else splitInput inpOpts
-                    
-                    let newRule = Rule (inpRule:opts) out
+                    let newRule = createRule inpRule inpOpts out
+                    putStrLn $ "Agregando regla a la categoria " ++ (show categ)
                     let categ' = addRule categ newRule
                     
                     runRWST (addRuleToList newRule) cnt ref
@@ -132,7 +130,6 @@ configRuleWidget = get >>= \ref -> ask >>= \cnt ->
                     
                     -- Agregar la nueva regla en la interfaz
         return ()
-    where splitInput st = map (T.unpack) $ T.split (=='\n') (T.pack st)
     
 configChatWidget :: GuiMonad ()
 configChatWidget = get >>= \ref -> ask >>= \cnt ->
@@ -150,7 +147,9 @@ configChatWidget = get >>= \ref -> ask >>= \cnt ->
                      let str = normalize str'
                      tvBuf <- textViewGetBuffer tvChat
                      
-                     either (\_ -> showChat tvChat tvBuf str "")
+                     putStrLn $ "Chat con categorias " ++ (show catsList)
+                     
+                     either (\_ -> showChat tvChat tvBuf str "no entiendo")
                             (\ans -> showChat tvChat tvBuf str ans)
                             (parseInChat catsList str)
                             

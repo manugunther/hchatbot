@@ -21,11 +21,23 @@ import HChatbot.ChatbotState
 import HChatbot.Category
 import HChatbot.Rule
 
+-- | Item para mostrar categorias y reglas. Cada item puede ser una categoria o una regla.
+data ListItem = ListItem { -- Nombre para mostrar en la lista
+                           _nameItem   :: String
+                           -- Categoria del elemento (categoria o regla)
+                         , _category   :: Category
+                           -- Si es una regla ruleId es el id para acceder
+                           -- a la regla en el mapa rules de la categoria.
+                         , _ruleId  :: Maybe RuleId
+                         }
+$(mkLenses ''ListItem)
+
+
 data RuleWidget = RuleWidget { _entryRule   :: Entry
                              , _tvRule      :: TextView
                              , _tvAnswer    :: TextView
                              , _applyButton :: Button
-                             , _ruleList    :: ListStore Rule
+                             , _ruleTStore   :: TreeStore ListItem
                              , _ruleTv      :: TreeView
                              , _ruleBox     :: VBox
                              }
@@ -77,11 +89,10 @@ io = liftIO
 
 initChState :: ChatbotState
 initChState =
-    ChatbotState (M.insert "Default" defCat $ M.singleton "Saludos" initCat)
+    ChatbotState (M.insert "Saludos" initCat M.empty)
                  "Saludos"
                  
-    where initCat = Category "Saludos" []
-          defCat = Category "Default" [Rule [""] "no entiendo"]
+    where initCat = Category "Saludos" M.empty
 
 
 initState :: GState
