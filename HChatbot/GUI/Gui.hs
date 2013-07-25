@@ -147,7 +147,7 @@ configChatWidget = get >>= \ref -> ask >>= \cnt ->
                      let str = normalize str'
                      tvBuf <- textViewGetBuffer tvChat
                      
-                     putStrLn $ "Chat con categorias " ++ (show catsList)
+--                      putStrLn $ "Chat con categorias " ++ (show catsList)
                      
                      either (\_ -> showChat tvChat tvBuf str "no entiendo")
                             (\ans -> showChat tvChat tvBuf str ans)

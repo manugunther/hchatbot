@@ -1,9 +1,11 @@
 module HChatbot.Category where
 
 import qualified Data.Map as M
+import qualified Data.Text as T
 import Data.Maybe
 
 import HChatbot.Rule
+import HChatbot.ParserRule
 
 type CategName = String
 
@@ -29,3 +31,28 @@ addRule c r =
                    then 1
                    else succ $ maximum ks
          
+         
+         
+createRInput :: String -> RuleIn
+createRInput s =
+    either (const $ [Literal "error de parseo"])
+           (\ir -> map normalizeInput ir)
+           (parserInput s)
+           
+createROutput :: String -> RuleOut
+createROutput s =
+    either (const $ [TextO "error de parseo"])
+           (\r -> r)
+           (parserOutput s)
+         
+createRule :: String -> String -> String -> Rule
+createRule inp otherInp out =
+    let opts = if otherInp==""
+                then []
+                else map createRInput $ splitInput otherInp
+    in
+        Rule { input = (createRInput inp):opts
+             , output = createROutput out
+        }
+    
+    where splitInput st = map (T.unpack) $ T.split (=='\n') (T.pack st)
