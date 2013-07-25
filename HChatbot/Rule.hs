@@ -10,8 +10,8 @@ import HChatbot.Normalization
 data InputRule = Literal String | IVariable String | WC WildCard
 
 instance Show InputRule where
-    show (Literal s) = show s
-    show (IVariable s) = "[" ++ (show s) ++ "]"
+    show (Literal s) = s
+    show (IVariable s) = "[" ++ s ++ "]"
     show (WC wc) = show wc
 
 -- El output de una regla puede ser texto, variable o condicional.
@@ -33,16 +33,17 @@ type RuleOut = [OutputRule]
 
 -- Regla de chat. 
 -- Invariante: input debe ser no vacia
-data Rule = Rule { input :: [RuleIn]
+data Rule = Rule { input  :: [RuleIn]
                  , output :: RuleOut
+                 , rname  :: String
                  }
 
 instance Show Rule where 
-    show (Rule rin rout) = (concat . (map show) . head) rin
+    show = rname
 
 
 rulename :: Rule -> String
-rulename = show
+rulename = rname
 
 
 normalizeInput :: InputRule -> InputRule

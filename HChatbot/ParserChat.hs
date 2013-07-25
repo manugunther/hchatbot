@@ -62,7 +62,7 @@ genParser rin = map parseIn (ruleInPairs rin)
                   
 
 parseSimpleInput :: InputRule -> ParsecC MatchRuleData ()
-parseSimpleInput (Literal s)   = lookAhead (string s) >> return ()
+parseSimpleInput (Literal s)   = try $ lookAhead (string s) >> return ()
 parseSimpleInput _ = lookAhead (anyChar) >> return ()
                                 
                                 

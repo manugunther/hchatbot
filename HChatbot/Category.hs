@@ -53,6 +53,7 @@ createRule inp otherInp out =
     in
         Rule { input = (createRInput inp):opts
              , output = createROutput out
+             , rname = inp
         }
     
     where splitInput st = map (T.unpack) $ T.split (=='\n') (T.pack st)

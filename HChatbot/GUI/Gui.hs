@@ -149,8 +149,8 @@ configChatWidget = get >>= \ref -> ask >>= \cnt ->
                      
 --                      putStrLn $ "Chat con categorias " ++ (show catsList)
                      
-                     either (\_ -> showChat tvChat tvBuf str "no entiendo")
-                            (\ans -> showChat tvChat tvBuf str ans)
+                     either (\_ -> showChat tvChat tvBuf str' "no entiendo")
+                            (\ans -> showChat tvChat tvBuf str' ans)
                             (parseInChat catsList str)
                             
                      entrySetText entryChat ""
