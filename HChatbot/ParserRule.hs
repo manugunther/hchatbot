@@ -6,6 +6,7 @@ import Text.Parsec.Language
 
 import Control.Monad.Identity
 import System.IO.Unsafe(unsafePerformIO)
+import Control.Applicative hiding ((<|>),many)
 
 import HChatbot.Rule
 
@@ -20,7 +21,7 @@ wildcPlus = '+'
 reservedChars = [beginVar,endVar,wildcPlus,wildcProd]
 
 parseLiteral :: ParsecR s InputRule
-parseLiteral = many1 (noneOf reservedChars) >>= return . Literal
+parseLiteral = Literal <$> many1 (noneOf reservedChars)
 
 
 parseVar :: ParsecR s String
@@ -29,12 +30,12 @@ parseVar = char beginVar >>
            char endVar >> return s
 
 parseVariable :: ParsecR s InputRule
-parseVariable = parseVar >>= return .IVariable
+parseVariable = IVariable <$> parseVar
                 
 parseWildCard :: ParsecR s InputRule
-parseWildCard = (char wildcProd >> return (WC WildCardProd))
+parseWildCard = (WC WildCardProd <$ char wildcProd)
                 <|>
-                (char wildcPlus >> return (WC WildCardPlus))
+                (WC WildCardPlus <$ char wildcPlus)
 
 
 parseRuleInput :: ParsecR s [InputRule]
@@ -46,10 +47,10 @@ parserInput = parse parseRuleInput ""
 
 
 parseTextOut :: ParsecR s OutputRule
-parseTextOut = many1 (noneOf reservedChars) >>= return . TextO
+parseTextOut = TextO <$> many1 (noneOf reservedChars)
 
 parseVarOut :: ParsecR s OutputRule
-parseVarOut = parseVar >>= return . OVariable
+parseVarOut = OVariable <$> parseVar
 
 parseCondOut :: ParsecR s OutputRule
 parseCondOut = fail "not implemented conditional"
@@ -59,6 +60,3 @@ parseRuleOutput = many (parseTextOut <|> parseVarOut <|> parseCondOut)
 
 parserOutput :: String -> Either ParseError [OutputRule]
 parserOutput = parse parseRuleOutput ""
-
-
-
