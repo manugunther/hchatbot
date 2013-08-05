@@ -1,4 +1,4 @@
-module HChatbot.GUI.Gui where
+module Main where
 
 import Graphics.UI.Gtk hiding (get)
 
