@@ -5,6 +5,7 @@ import Text.Parsec.Token
 import Text.Parsec.Language
 
 import qualified Data.Map as M
+import Data.Maybe(fromJust)
 
 import Control.Monad.Identity
 import System.IO.Unsafe(unsafePerformIO)
@@ -18,7 +19,8 @@ type ParsecC a b = ParsecT String a Identity b
 -- Datos del matcheo con la regla. Por ahora solo
 -- la correspondencia entre nombres de variables y strings asignados
 -- a cada nombre
-data MatchRuleData = MRData { vars :: [(String,String)] }
+data MatchRuleData = MRData { vars :: [(String,String)]
+                            , ruleData :: Maybe (Category,Rule)}
 
 
 -- Dada una lista de RuleInput generamos una lista de pares con cada 
@@ -40,7 +42,11 @@ genParser :: RuleIn -> [ParsecC MatchRuleData ()]
 genParser rin = map parseIn (ruleInPairs rin)
     where parseIn (ir,mpstop) =
             case ir of
-                 Literal s   -> string s >> return ()
+                 -- s debe encontrarse literalmente y si no es el final del string
+                 -- entonces debe seguir de un espacio.
+                 Literal s   -> string s >> (eof <|> (char ' ' >> return ()))
+                 -- una variable es cualquier texto encontrado hasta que haya matching
+                 -- con la regla siguiente (pstop)
                  IVariable v -> maybe (many anyChar >>= \value -> 
                                        updateMRData (v,value))
                                       (\pstop -> manyTill anyChar pstop >>=
@@ -85,25 +91,30 @@ processOut r mrd =
                       (lookup v $ vars mrd)
           showChatOut mrd _ = "not implemented"
         
-parseWithRule :: Rule -> ParsecC MatchRuleData String
-parseWithRule r = 
+parseWithRule :: Category -> Rule -> ParsecC MatchRuleData String
+parseWithRule c r = 
         foldl (<|>) (fail "rule doesn't match") 
               (map (\rin -> try (parseRIn rin >> eof) >> getState >>=
-                            \mrdata -> return (processOut r mrdata))
+                            \mrdata -> putState (mrdata { ruleData = Just (c,r)}) >>
+                            return (processOut r mrdata))
                    (input r))
               
-parseWithRules :: [Rule] -> ParsecC MatchRuleData String
-parseWithRules rs =
+parseWithRules :: Category -> [Rule] -> ParsecC MatchRuleData String
+parseWithRules c rs =
     foldl (<|>) (fail "neither rule matching") 
-              (map parseWithRule rs)
+              (map (parseWithRule c) rs)
               
 parseWithCategory :: [Category] -> ParsecC MatchRuleData String
 parseWithCategory cs =
     foldl (<|>) (fail "no matching")
-              (map (parseWithRules . M.elems . rules) cs)
+              (map (\c -> (parseWithRules c . M.elems . rules) c) cs)
 
-parseInChat :: [Category] -> String -> Either ParseError String
-parseInChat cs = runParser (parseWithCategory cs) (MRData []) ""
+parseInChat :: [Category] -> String -> Either ParseError (String,Category,Rule)
+parseInChat cs = runParser (parseWithCategory cs >>= \res -> getState >>= 
+                           -- aqui usamos fromJust porque estamos seguros que si parseó,
+                           -- tenemos una categoría y una regla correspondientes
+                           \mrdata -> return (fromJust $ ruleData mrdata) >>= \(c,r) ->
+                           return (res,c,r)) (MRData [] Nothing) ""
     
 
 

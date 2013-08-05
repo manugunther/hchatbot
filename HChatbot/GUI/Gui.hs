@@ -41,6 +41,7 @@ main = do
                 configRuleWidget
                 configChatWidget
                 configRuleList
+                configToolButtons
             ) gReader gState
     
     mainGUI
@@ -70,11 +71,16 @@ makeGState xml = do
     entryChat <- builderGetObject xml castToEntry "entryChat"
     
     let chatwidget = ChatWidget tvChat entryChat
+        
+    newCB <- builderGetObject xml castToToolButton "newCategB"
+    newRB <- builderGetObject xml castToToolButton "newRuleB"
+    
+    let toolswidget = ToolsWidget newCB newRB
     
     win <- builderGetObject xml castToWindow "window"
     
     gstate <- newRef initState
-    let greader = GReader win rwidget chatwidget
+    let greader = GReader win rwidget chatwidget toolswidget
     
     return (greader,gstate)
     
@@ -98,10 +104,22 @@ configRuleWidget = get >>= \ref -> ask >>= \cnt ->
                 do
                     st  <- readRef ref
                     let cname = st ^. selCateg
+                    let mrid  = st ^. selRule
                     let chst = (st ^. chatState)
                     let categMap = categs chst
                     let categ = fromJust $ M.lookup cname categMap
                     
+                    maybe (return ())
+                          (saveRule cnt ref categ)
+                          mrid
+                    
+        return ()
+        
+    where saveRule cnt ref categ rid =
+                do
+                    let rulew  = cnt ^. hRuleWidget
+                    st  <- readRef ref
+                    let chst = (st ^. chatState)
                     putStrLn "Guardando regla"
                     inpRule <- entryGetText (rulew ^. entryRule)
                     tbufRule <- textViewGetBuffer (rulew ^. tvRule)
@@ -113,24 +131,16 @@ configRuleWidget = get >>= \ref -> ask >>= \cnt ->
                     
                     inpOpts <- textBufferGetText tbufRule stitRule enditRule True
                     out <- textBufferGetText tbufAns stitAns enditAns True
-
                     
                     let newRule = createRule inpRule inpOpts out
-                    putStrLn $ "Agregando regla a la categoria " ++ (show categ)
-                    let categ' = addRule categ newRule
+                    let categ' = updateRule categ rid newRule
+                    let cname = name categ
                     
-                    runRWST (addRuleToList newRule) cnt ref
-                    
-                    putStrLn $ "newRule = " ++ (show newRule)
+                    runRWST (updateRuleList rid newRule categ') cnt ref
                     
                     writeRef ref (GState (replaceCateg chst cname categ')
-                                         cname)
+                                            cname (Just rid))
                     
-
-                    
-                    -- Agregar la nueva regla en la interfaz
-        return ()
-    
 configChatWidget :: GuiMonad ()
 configChatWidget = get >>= \ref -> ask >>= \cnt ->
     do
@@ -150,7 +160,9 @@ configChatWidget = get >>= \ref -> ask >>= \cnt ->
 --                      putStrLn $ "Chat con categorias " ++ (show catsList)
                      
                      either (\_ -> showChat tvChat tvBuf str' "no entiendo")
-                            (\ans -> showChat tvChat tvBuf str' ans)
+                            (\(ans,c,r) -> showChat tvChat tvBuf str' ans >>
+                               changeActCateg cnt ref chState (name c) >>
+                               putStrLn ("Rule " ++ (rname r) ++ "| Category " ++ (name c)))
                             (parseInChat catsList str)
                             
                      entrySetText entryChat ""
@@ -168,3 +180,81 @@ configChatWidget = get >>= \ref -> ask >>= \cnt ->
 
           textBufferInsertLn buf str = textBufferGetEndIter buf >>= \titer ->
                                        textBufferInsert buf titer ('\n':str)
+                                       
+          changeActCateg cnt ref chState cname =
+                runRWST (updateGState ((<~) chatState 
+                      (updActualCateg chState cname))) cnt ref
+                                       
+configToolButtons :: GuiMonad ()
+configToolButtons = get >>= \ref -> ask >>= \cnt ->
+    do
+        let categB = cnt ^. (hToolsWidget . newCategB)
+        let ruleB = cnt ^. (hToolsWidget . newRuleB)
+        
+        io $ onToolButtonClicked categB $
+            readRef ref >>= \st ->
+            return (st ^. chatState) >>= \chst ->
+            dialogCategory >>=
+            maybe (return ()) (addCategory chst ref cnt)
+        
+        io $ onToolButtonClicked ruleB $
+            do
+                st <- readRef ref
+                let chst = st ^. chatState
+                let chst = st ^. chatState
+                let selCatName = st ^. selCateg
+                putStrLn $ "Categoria seleccionada "++ (show selCatName)
+                let (Just selCat) = getCateg chst selCatName
+                
+                addR cnt ref selCat chst
+        
+        
+        return ()
+                  
+    where addCategory chst ref cnt cname =
+                let cat = Category cname M.empty in
+                    (evalRWST (addCategToList cat >>
+                             updateGState ((<~) chatState (addCateg chst cat))
+                             ) 
+                            cnt ref) >>
+                    return ()
+          
+          addR cnt ref categ chst = do
+              let cname = name categ
+              
+              let nrule = createRule "" "" ""
+              let categ' = addRule categ nrule
+              
+              runRWST (addRuleToList nrule) cnt ref
+              
+              putStrLn $ "newRule = " ++ (show nrule)
+              
+              writeRef ref (GState (replaceCateg chst cname categ')
+                                        cname (Just $ newid categ))
+            
+    
+  
+dialogCategory :: IO (Maybe String)
+dialogCategory = do
+    dialog <- dialogNew
+    box <- dialogGetUpper dialog
+    
+    cancelB <- dialogAddButton dialog stockCancel ResponseCancel
+    okB     <- dialogAddButton dialog stockOk ResponseOk
+    
+    entry <- entryNew
+    boxPackStart box entry PackNatural 5
+ 
+    widgetShowAll box
+        
+    rid <- dialogRun dialog
+    
+    case rid of
+         ResponseCancel ->  widgetDestroy dialog >> return Nothing
+         ResponseOk     -> entryGetText entry >>= \text ->
+                            widgetDestroy dialog >> (return . Just) text
+   
+   
+    
+    
+    

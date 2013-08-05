@@ -20,17 +20,20 @@ instance Show Category where
 
 addRule :: Category -> Rule -> Category
 addRule c r =
-    let rid = newid (rules c) in
+    let rid = newid c in
     Category { name = name c
              , rules = M.insert rid r (rules c)
     }
 
-    where newid m =
-            let ks = M.keys m in
-                if ks == []
-                   then 1
-                   else succ $ maximum ks
+newid categ =
+    let ks = M.keys (rules categ) in
+        if ks == []
+            then 1
+            else succ $ maximum ks
          
+updateRule :: Category -> RuleId -> Rule -> Category
+updateRule c rid r =
+    c { rules = M.insert rid r (rules c) }
          
          
 createRInput :: String -> RuleIn
@@ -57,3 +60,9 @@ createRule inp otherInp out =
         }
     
     where splitInput st = map (T.unpack) $ T.split (=='\n') (T.pack st)
+          
+          
+getRule :: Category -> RuleId -> Maybe Rule
+getRule c rid =
+    M.lookup rid (rules c)
+          

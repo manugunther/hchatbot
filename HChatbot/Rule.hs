@@ -18,6 +18,11 @@ instance Show InputRule where
 data OutputRule = TextO String | OVariable String | 
                   Condition FormRule OutputRule OutputRule
 
+instance Show OutputRule where
+    show (TextO s) = s
+    show (OVariable s) = "[" ++ s ++ "]"
+    show _ = "not implemented"
+
 -- Completar en algún momento
 type FormRule = String
                   
@@ -45,6 +50,24 @@ instance Show Rule where
 rulename :: Rule -> String
 rulename = rname
 
+choicesInStr :: Rule -> String
+choicesInStr r =
+    let rin = input r in
+        toString (tail rin)
+        
+    where toString ls = 
+            case ls of
+                 []     -> ""
+                 (c:cs) -> (showRuleInOut c) ++ 
+                    (foldl (\acum rin -> acum ++ "\n" ++ (showRuleInOut rin)) "" cs)
+
+
+showRuleInOut :: Show a => [a] -> String
+showRuleInOut ls = 
+    case ls of
+         []     -> ""
+         (c:cs) -> (show c) ++ (foldl (\acum ir -> acum ++ " " ++ (show ir)) "" cs)
+    
 
 normalizeInput :: InputRule -> InputRule
 normalizeInput (Literal s) = Literal (normalize s)

@@ -24,8 +24,8 @@ import HChatbot.Rule
 -- | Item para mostrar categorias y reglas. Cada item puede ser una categoria o una regla.
 data ListItem = ListItem { -- Nombre para mostrar en la lista
                            _nameItem   :: String
-                           -- Categoria del elemento (categoria o regla)
-                         , _category   :: Category
+                           -- Nombre de la categoria del elemento
+                         , _catName   :: String
                            -- Si es una regla ruleId es el id para acceder
                            -- a la regla en el mapa rules de la categoria.
                          , _ruleId  :: Maybe RuleId
@@ -49,16 +49,23 @@ data ChatWidget = ChatWidget { _tvChat    :: TextView
                              }
 $(mkLenses ''ChatWidget)
 
+data ToolsWidget = ToolsWidget { _newCategB :: ToolButton
+                               , _newRuleB  :: ToolButton
+                               }
+$(mkLenses ''ToolsWidget)
+
 
 data GReader = GReader { _hWindow      :: Window
                        , _hRuleWidget  :: RuleWidget
                        , _hChatWidget  :: ChatWidget
+                       , _hToolsWidget :: ToolsWidget
                        }
 $(mkLenses ''GReader)
 
 data GState = GState { _chatState :: ChatbotState
                      -- nombre de la categoría seleccionada en la interfaz
-                     , _selCateg :: String
+                     , _selCateg :: CategName
+                     , _selRule  :: Maybe RuleId
                      }
 $(mkLenses ''GState)
 
@@ -97,4 +104,4 @@ initChState =
 
 initState :: GState
 initState =
-    GState initChState (actualCateg initChState)
+    GState initChState (actualCateg initChState) Nothing
