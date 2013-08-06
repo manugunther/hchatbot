@@ -21,6 +21,9 @@ import HChatbot.ChatbotState
 import HChatbot.Category
 import HChatbot.Rule
 
+
+import GramLab.Morfette.Utils
+
 -- | Item para mostrar categorias y reglas. Cada item puede ser una categoria o una regla.
 data ListItem = ListItem { -- Nombre para mostrar en la lista
                            _nameItem   :: String
@@ -59,6 +62,7 @@ data GReader = GReader { _hWindow      :: Window
                        , _hRuleWidget  :: RuleWidget
                        , _hChatWidget  :: ChatWidget
                        , _hToolsWidget :: ToolsWidget
+                       , _hMorfette    :: MorfState 
                        }
 $(mkLenses ''GReader)
 

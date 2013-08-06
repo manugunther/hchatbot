@@ -3,7 +3,7 @@ module HChatbot.Rule where
 import qualified Data.Text as T
 
 import HChatbot.Normalization
-
+import GramLab.Morfette.Utils (MorfState, predictStr)
 
 -- Una regla puede contener texto para matchear literalmente,
 -- variables, o comodin.
@@ -73,3 +73,6 @@ normalizeInput :: InputRule -> InputRule
 normalizeInput (Literal s) = Literal (normalize s)
 normalizeInput ir = ir
 
+lemmatize :: MorfState -> InputRule -> InputRule
+lemmatize morf (Literal s) = Literal (predictStr morf s)
+lemmatize _ ir = ir

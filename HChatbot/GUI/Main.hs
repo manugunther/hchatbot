@@ -27,6 +27,8 @@ import HChatbot.Rule
 import HChatbot.GUI.GState
 import HChatbot.GUI.RuleList
 
+import GramLab.Morfette.Utils
+
 -- | Función principal de la interfaz.
 main :: IO ()
 main = do
@@ -35,7 +37,9 @@ main = do
     xml <- builderNew
     builderAddFromFile xml "HChatbot/GUI/hchatbot.ui"
 
-    (gReader,gState) <- makeGState xml
+    morfState <- loadModel "data/es"
+
+    (gReader,gState) <- makeGState xml morfState
     
     runRWST (do configWindow
                 configRuleWidget
@@ -47,8 +51,8 @@ main = do
     mainGUI
 
 
-makeGState :: Builder -> IO (GReader,GStateRef) 
-makeGState xml = do
+makeGState :: Builder -> MorfState -> IO (GReader,GStateRef) 
+makeGState xml morfState = do
     -- Obtenemos elementos de la interfaz:
     
     -- RuleWidget
@@ -80,7 +84,7 @@ makeGState xml = do
     win <- builderGetObject xml castToWindow "window"
     
     gstate <- newRef initState
-    let greader = GReader win rwidget chatwidget toolswidget
+    let greader = GReader win rwidget chatwidget toolswidget morfState
     
     return (greader,gstate)
     

@@ -20,4 +20,4 @@ executable hchatbot
   build-depends:       base ==4.6.*, text ==0.11.*, containers ==0.5.*, parsec ==3.1.*, 
                        mtl ==2.1.*, gtk ==0.12.*, transformers ==0.3.*, stm ==2.4.*, 
                        lens-family-core ==0.1.*, reference ==0.1.*, lens-family-th ==0.2.*, 
-                       gtksourceview2 ==0.12.*
+                       gtksourceview2 ==0.12.*, morfette
